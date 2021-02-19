@@ -40,7 +40,7 @@ export const ExpressServerConfig = tag<ExpressServerConfig>()
 
 export const LiveExpressServerConfig = (host: string, port: number) =>
   L.succeed(ExpressServerConfig.of({ _tag: "ExpressServerConfig", host, port })).setKey(
-    ExpressServerConfig.key as any
+    ExpressServerConfig.key
   )
 
 export const makeExpressServer = M.gen(function* (_) {
