@@ -29,8 +29,8 @@
     "modules": []
   },
   "peerDependencies": {
-    "@effect-ts/core": "^0.20.4",
-    "@effect-ts/tracing-utils": "^0.4.1",
+    "@effect-ts/core": "^0.20.5",
+    "@effect-ts/tracing-utils": "^0.4.2",
     "express": "^4.17.1"
   }
 }
