@@ -87,7 +87,7 @@ export const ExpressServer = tag<ExpressServer>()
 export const LiveExpressServer = L.fromManaged(ExpressServer)(makeExpressServer)
 
 export const LiveExpress = (host: string, port: number) =>
-  LiveExpressServerConfig(host, port)[">+>"](LiveExpressApp["&+>"](LiveExpressServer))
+  LiveExpressServerConfig(host, port)[">+>"](LiveExpressApp[">+>"](LiveExpressServer))
 
 export const expressApp = T.accessService(ExpressApp)((_) => _.app)
 
