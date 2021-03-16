@@ -15,8 +15,8 @@ module.exports = {
   ],
   verbose: true,
   moduleNameMapper: {
-    "@effect-ts/query/(.*)$": "<rootDir>/packages/query/build/_traced/$1",
-    "@effect-ts/query$": "<rootDir>/packages/query/build/_traced"
+    "@effect-ts/express/(.*)$": "<rootDir>/packages/express/build/$1",
+    "@effect-ts/express$": "<rootDir>/packages/express/build"
   },
   globals: {
     "ts-jest": {
