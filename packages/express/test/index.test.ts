@@ -2,10 +2,9 @@ import * as T from "@effect-ts/core/Effect"
 import * as Exit from "@effect-ts/core/Effect/Exit"
 import * as L from "@effect-ts/core/Effect/Layer"
 import { pipe } from "@effect-ts/core/Function"
-import type { Has } from "@effect-ts/core/Has"
 import { tag } from "@effect-ts/core/Has"
 
-import { LiveExpress, withExpressApp } from "../src"
+import * as Express from "../src"
 
 describe("Dummy", () => {
   it("pass", async () => {
@@ -26,26 +25,16 @@ describe("Dummy", () => {
     const port = 31157
 
     const exit = await pipe(
-      withExpressApp((app) =>
-        T.runtime<Has<AppConfig>>()["|>"](
-          T.chain((runtime) =>
-            T.effectTotal(() => {
-              app.get("/", (_, res) => {
-                runtime.run(
-                  accessBodyM((body) =>
-                    T.effectTotal(() => {
-                      res.send(body)
-                    })
-                  )
-                )
-              })
-            })
-          )
+      Express.get("/", (_, res) =>
+        accessBodyM((body) =>
+          T.effectTotal(() => {
+            res.send(body)
+          })
         )
       ),
       T.andThen(T.fromPromise(() => fetch(`http://${host}:${port}/`))),
       T.chain((r) => T.fromPromise(() => r.json())),
-      T.provideSomeLayer(LiveExpress(host, port)["+++"](LiveAppConfig)),
+      T.provideSomeLayer(Express.LiveExpress(host, port)["+++"](LiveAppConfig)),
       T.runPromiseExit
     )
 
