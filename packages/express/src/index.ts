@@ -1,8 +1,11 @@
 // tracing: off
 
 import * as T from "@effect-ts/core/Effect"
+import * as F from "@effect-ts/core/Effect/Fiber"
 import * as L from "@effect-ts/core/Effect/Layer"
 import * as M from "@effect-ts/core/Effect/Managed"
+import * as Supervisor from "@effect-ts/core/Effect/Supervisor"
+import { pipe } from "@effect-ts/core/Function"
 import type { Has } from "@effect-ts/core/Has"
 import type { NonEmptyArray } from "@effect-ts/core/NonEmptyArray"
 import { literal } from "@effect-ts/system/Function"
@@ -16,7 +19,7 @@ export const makeExpressApp = T.gen(function* (_) {
   const app = yield* _(T.effectTotal(() => express()))
 
   return {
-    _tag: literal("ExpressApp"),
+    _tag: literal("@effect-ts/express/App"),
     app
   }
 })
@@ -24,6 +27,23 @@ export const makeExpressApp = T.gen(function* (_) {
 export interface ExpressApp extends _A<typeof makeExpressApp> {}
 export const ExpressApp = tag<ExpressApp>()
 export const LiveExpressApp = L.fromEffect(ExpressApp)(makeExpressApp)
+
+export const makeExpressSupervisor = M.gen(function* (_) {
+  const supervisor = yield* _(
+    Supervisor.track["|>"](M.makeExit((s) => s.value["|>"](T.chain(F.interruptAll))))
+  )
+
+  return {
+    _tag: literal("@effect-ts/express/Supervisor"),
+    supervisor
+  }
+})
+
+export interface ExpressSupervisor extends _A<typeof makeExpressSupervisor> {}
+export const ExpressSupervisor = tag<ExpressSupervisor>()
+export const LiveExpressSupervisor = L.fromManaged(ExpressSupervisor)(
+  makeExpressSupervisor
+)
 
 export class NodeServerCloseError {
   readonly _tag = "NodeServerCloseError"
@@ -36,7 +56,7 @@ export class NodeServerListenError {
 }
 
 export interface ExpressServerConfig {
-  readonly _tag: "ExpressServerConfig"
+  readonly _tag: "@effect-ts/express/ServerConfig"
   readonly port: number
   readonly host: string
 }
@@ -44,9 +64,9 @@ export interface ExpressServerConfig {
 export const ExpressServerConfig = tag<ExpressServerConfig>()
 
 export const LiveExpressServerConfig = (host: string, port: number) =>
-  L.succeed(ExpressServerConfig.of({ _tag: "ExpressServerConfig", host, port })).setKey(
-    ExpressServerConfig.key
-  )
+  L.succeed(
+    ExpressServerConfig.of({ _tag: "@effect-ts/express/ServerConfig", host, port })
+  ).setKey(ExpressServerConfig.key)
 
 export const makeExpressServer = M.gen(function* (_) {
   const { app } = yield* _(ExpressApp)
@@ -82,7 +102,7 @@ export const makeExpressServer = M.gen(function* (_) {
   )
 
   return {
-    _tag: literal("ExpressServer"),
+    _tag: literal("@effect-ts/express/Server"),
     server
   }
 })
@@ -92,7 +112,9 @@ export const ExpressServer = tag<ExpressServer>()
 export const LiveExpressServer = L.fromManaged(ExpressServer)(makeExpressServer)
 
 export const LiveExpress = (host: string, port: number) =>
-  LiveExpressServerConfig(host, port)[">+>"](LiveExpressApp[">+>"](LiveExpressServer))
+  LiveExpressServerConfig(host, port)
+    [">+>"](LiveExpressApp[">+>"](LiveExpressServer))
+    ["+++"](LiveExpressSupervisor)
 
 export const expressApp = T.accessService(ExpressApp)((_) => _.app)
 
@@ -159,6 +181,17 @@ export interface EffectRequestHandler<
   ): T.RIO<R, void>
 }
 
+export function expressRuntime<R>() {
+  return pipe(
+    T.do,
+    T.bind("supervisor", () => T.service(ExpressSupervisor)),
+    T.bind("runtime", ({ supervisor: { supervisor } }) =>
+      T.runtime<R>()["|>"](T.map((r) => r.supervised(supervisor)))
+    ),
+    T.map(({ runtime }) => runtime)
+  )
+}
+
 export function match(method: Methods) {
   return function <
     Handlers extends NonEmptyArray<EffectRequestHandler<any, any, any, any, any, any>>
@@ -167,6 +200,7 @@ export function match(method: Methods) {
     ...handlers: Handlers
   ): T.RIO<
     Has<ExpressApp> &
+      Has<ExpressSupervisor> &
       _R<
         {
           [k in keyof Handlers]: [Handlers[k]] extends [
@@ -178,7 +212,7 @@ export function match(method: Methods) {
       >,
     void
   > {
-    return T.runtime()["|>"](
+    return expressRuntime()["|>"](
       T.chain((runtime) =>
         withExpressApp((app) =>
           T.effectTotal(() => {
@@ -203,6 +237,7 @@ export function use<
   ...handlers: Handlers
 ): T.RIO<
   Has<ExpressApp> &
+    Has<ExpressSupervisor> &
     _R<
       {
         [k in keyof Handlers]: [Handlers[k]] extends [
@@ -221,6 +256,7 @@ export function use<
   ...handlers: Handlers
 ): T.RIO<
   Has<ExpressApp> &
+    Has<ExpressSupervisor> &
     _R<
       {
         [k in keyof Handlers]: [Handlers[k]] extends [
@@ -232,8 +268,10 @@ export function use<
     >,
   void
 >
-export function use(...args: any[]): T.RIO<Has<ExpressApp>, void> {
-  return T.runtime()["|>"](
+export function use(
+  ...args: any[]
+): T.RIO<Has<ExpressApp> & Has<ExpressSupervisor>, void> {
+  return expressRuntime()["|>"](
     T.chain((runtime) =>
       withExpressApp((app) =>
         T.effectTotal(() => {
