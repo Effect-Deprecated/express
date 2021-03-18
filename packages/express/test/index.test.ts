@@ -6,8 +6,8 @@ import { tag } from "@effect-ts/core/Has"
 
 import * as Express from "../src"
 
-describe("Dummy", () => {
-  it("pass", async () => {
+describe("Express", () => {
+  it("should answer positively", async () => {
     interface AppConfig {
       _tag: "@demo/AppConfig"
       body: { message: string }
@@ -40,7 +40,7 @@ describe("Dummy", () => {
 
     expect(exit).toEqual(Exit.succeed({ message: "ok" }))
   })
-  it("pass", async () => {
+  it("should log defect", async () => {
     const fakeLog = jest.fn()
     const consoleSpy = jest.spyOn(console, "error")
 
