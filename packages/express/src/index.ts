@@ -74,7 +74,7 @@ export const ExpressServerConfig = tag<ExpressServerConfig>().setKey(
   ExpressServerConfigTag
 )
 
-export const LiveExpressServerConfig = <R>(
+export function LiveExpressServerConfig<R>(
   host: string,
   port: number,
   exitHandler: (
@@ -82,8 +82,8 @@ export const LiveExpressServerConfig = <R>(
     res: Response,
     next: NextFunction
   ) => (cause: Cause<never>) => T.RIO<R, void>
-) =>
-  L.fromEffect(ExpressServerConfig)(
+) {
+  return L.fromEffect(ExpressServerConfig)(
     T.access((r: R) => ({
       _tag: ExpressServerConfigTag,
       host,
@@ -92,6 +92,7 @@ export const LiveExpressServerConfig = <R>(
         T.provideAll_(exitHandler(req, res, next)(cause), r)
     }))
   )
+}
 
 export const ExpressServerTag = literal("@effect-ts/express/Server")
 
