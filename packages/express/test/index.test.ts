@@ -40,4 +40,32 @@ describe("Dummy", () => {
 
     expect(exit).toEqual(Exit.succeed({ message: "ok" }))
   })
+  it("pass", async () => {
+    const fakeLog = jest.fn()
+    const consoleSpy = jest.spyOn(console, "error")
+
+    consoleSpy.mockImplementation(fakeLog)
+
+    const host = "127.0.0.1"
+    const port = 31157
+
+    await pipe(
+      Express.get("/", (_, _res) =>
+        T.effectTotal(() => {
+          throw new Error("defect")
+        })
+      ),
+      T.andThen(T.fromPromise(() => fetch(`http://${host}:${port}/`))),
+      T.provideSomeLayer(Express.LiveExpress(host, port)),
+      T.runPromiseExit
+    )
+
+    consoleSpy.mockRestore()
+
+    expect(fakeLog).toBeCalled()
+    expect(fakeLog.mock.calls[0][0]).toContain("Error: defect")
+    expect(fakeLog.mock.calls[0][0]).toContain(
+      "(@effect-ts/express/test): test/index.test.ts:54:22"
+    )
+  })
 })
