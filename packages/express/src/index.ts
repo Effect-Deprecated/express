@@ -1,6 +1,7 @@
 // tracing: off
 
 import * as T from "@effect-ts/core/Effect"
+import type { Cause } from "@effect-ts/core/Effect/Cause"
 import * as F from "@effect-ts/core/Effect/Fiber"
 import * as L from "@effect-ts/core/Effect/Layer"
 import * as M from "@effect-ts/core/Effect/Managed"
@@ -16,18 +17,22 @@ import type { NextFunction, Request, RequestHandler, Response } from "express"
 import express from "express"
 import type { Server } from "http"
 
+export const ExpressAppTag = literal("@effect-ts/express/App")
+
 export const makeExpressApp = T.gen(function* (_) {
   const app = yield* _(T.effectTotal(() => express()))
 
   return {
-    _tag: literal("@effect-ts/express/App"),
+    _tag: ExpressAppTag,
     app
   }
 })
 
 export interface ExpressApp extends _A<typeof makeExpressApp> {}
-export const ExpressApp = tag<ExpressApp>()
+export const ExpressApp = tag<ExpressApp>().setKey(ExpressAppTag)
 export const LiveExpressApp = L.fromEffect(ExpressApp)(makeExpressApp)
+
+export const ExpressSupervisorTag = literal("@effect-ts/express/Supervisor")
 
 export const makeExpressSupervisor = M.gen(function* (_) {
   const supervisor = yield* _(
@@ -35,13 +40,13 @@ export const makeExpressSupervisor = M.gen(function* (_) {
   )
 
   return {
-    _tag: literal("@effect-ts/express/Supervisor"),
+    _tag: ExpressSupervisorTag,
     supervisor
   }
 })
 
 export interface ExpressSupervisor extends _A<typeof makeExpressSupervisor> {}
-export const ExpressSupervisor = tag<ExpressSupervisor>()
+export const ExpressSupervisor = tag<ExpressSupervisor>().setKey(ExpressSupervisorTag)
 export const LiveExpressSupervisor = L.fromManaged(ExpressSupervisor)(
   makeExpressSupervisor
 )
@@ -56,28 +61,39 @@ export class NodeServerListenError {
   constructor(readonly error: Error) {}
 }
 
+export const ExpressServerConfigTag = literal("@effect-ts/express/ServerConfig")
+
 export interface ExpressServerConfig {
-  readonly _tag: "@effect-ts/express/ServerConfig"
+  readonly _tag: typeof ExpressServerConfigTag
   readonly port: number
   readonly host: string
   readonly exitHandler: typeof defaultExitHandler
 }
 
-export const ExpressServerConfig = tag<ExpressServerConfig>()
+export const ExpressServerConfig = tag<ExpressServerConfig>().setKey(
+  ExpressServerConfigTag
+)
 
-export const LiveExpressServerConfig = (
+export const LiveExpressServerConfig = <R>(
   host: string,
   port: number,
-  exitHandler: typeof defaultExitHandler
+  exitHandler: (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => (cause: Cause<never>) => T.RIO<R, void>
 ) =>
-  L.succeed(
-    ExpressServerConfig.of({
-      _tag: "@effect-ts/express/ServerConfig",
+  L.fromEffect(ExpressServerConfig)(
+    T.access((r: R) => ({
+      _tag: ExpressServerConfigTag,
       host,
       port,
-      exitHandler
-    })
-  ).setKey(ExpressServerConfig.key)
+      exitHandler: (req, res, next) => (cause) =>
+        T.provideAll_(exitHandler(req, res, next)(cause), r)
+    }))
+  )
+
+export const ExpressServerTag = literal("@effect-ts/express/Server")
 
 export const makeExpressServer = M.gen(function* (_) {
   const { app } = yield* _(ExpressApp)
@@ -113,13 +129,13 @@ export const makeExpressServer = M.gen(function* (_) {
   )
 
   return {
-    _tag: literal("@effect-ts/express/Server"),
+    _tag: ExpressServerTag,
     server
   }
 })
 
 export interface ExpressServer extends _A<typeof makeExpressServer> {}
-export const ExpressServer = tag<ExpressServer>()
+export const ExpressServer = tag<ExpressServer>().setKey(ExpressServerTag)
 export const LiveExpressServer = L.fromManaged(ExpressServer)(makeExpressServer)
 
 export type ExpressEnv = Has<ExpressServerConfig> &
@@ -129,10 +145,27 @@ export type ExpressEnv = Has<ExpressServerConfig> &
 
 export function LiveExpress(
   host: string,
+  port: number
+): L.Layer<unknown, never, ExpressEnv>
+export function LiveExpress<R>(
+  host: string,
   port: number,
-  exitHandler: typeof defaultExitHandler = defaultExitHandler
-): L.Layer<unknown, never, ExpressEnv> {
-  return LiveExpressServerConfig(host, port, exitHandler)
+  exitHandler: (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => (cause: Cause<never>) => T.RIO<R, void>
+): L.Layer<R, never, ExpressEnv>
+export function LiveExpress<R>(
+  host: string,
+  port: number,
+  exitHandler?: (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => (cause: Cause<never>) => T.RIO<R, void>
+): L.Layer<R, never, ExpressEnv> {
+  return LiveExpressServerConfig(host, port, exitHandler || defaultExitHandler)
     [">+>"](LiveExpressSupervisor)
     [">+>"](LiveExpressApp)
     [">+>"](LiveExpressServer)
@@ -244,7 +277,12 @@ export function match(
                 path,
                 ...handlers.map(
                   (handler): RequestHandler => (req, res, next) => {
-                    runtime.run(handler(req, res, next), exitHandler(req, res, next))
+                    runtime.run(
+                      T.onTermination_(
+                        handler(req, res, next),
+                        exitHandler(req, res, next)
+                      )
+                    )
                   }
                 )
               )
@@ -260,15 +298,14 @@ export function defaultExitHandler(
   _req: Request,
   _res: Response,
   _next: NextFunction
-): F.Callback<never, void> {
-  return (e) => {
-    if (e._tag === "Failure") {
-      if (died(e.cause)) {
-        console.error(pretty(e.cause))
+): (cause: Cause<never>) => T.RIO<unknown, void> {
+  return (cause) =>
+    T.effectTotal(() => {
+      if (died(cause)) {
+        console.error(pretty(cause))
       }
       _res.status(500).end()
-    }
-  }
+    })
 }
 
 export function use<
@@ -320,7 +357,12 @@ export function use(...args: any[]): T.RIO<ExpressEnv, void> {
                     res,
                     next
                   ) => {
-                    runtime.run(handler(req, res, next), exitHandler(req, res, next))
+                    runtime.run(
+                      T.onTermination_(
+                        handler(req, res, next),
+                        exitHandler(req, res, next)
+                      )
+                    )
                   }
                 )
               )
@@ -333,7 +375,12 @@ export function use(...args: any[]): T.RIO<ExpressEnv, void> {
                     res,
                     next
                   ) => {
-                    runtime.run(handler(req, res, next), exitHandler(req, res, next))
+                    runtime.run(
+                      T.onTermination_(
+                        handler(req, res, next),
+                        exitHandler(req, res, next)
+                      )
+                    )
                   }
                 )
               )
