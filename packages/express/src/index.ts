@@ -111,10 +111,20 @@ export interface ExpressServer extends _A<typeof makeExpressServer> {}
 export const ExpressServer = tag<ExpressServer>()
 export const LiveExpressServer = L.fromManaged(ExpressServer)(makeExpressServer)
 
-export const LiveExpress = (host: string, port: number) =>
-  LiveExpressServerConfig(host, port)
-    [">+>"](LiveExpressApp[">+>"](LiveExpressServer))
-    ["+++"](LiveExpressSupervisor)
+export type ExpressEnv = Has<ExpressServerConfig> &
+  Has<ExpressSupervisor> &
+  Has<ExpressApp> &
+  Has<ExpressServer>
+
+export function LiveExpress(
+  host: string,
+  port: number
+): L.Layer<unknown, never, ExpressEnv> {
+  return LiveExpressServerConfig(host, port)
+    [">+>"](LiveExpressSupervisor)
+    [">+>"](LiveExpressApp)
+    [">+>"](LiveExpressServer)
+}
 
 export const expressApp = T.accessService(ExpressApp)((_) => _.app)
 
