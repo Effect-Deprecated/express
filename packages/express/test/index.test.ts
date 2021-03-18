@@ -25,10 +25,10 @@ describe("Dummy", () => {
     const port = 31157
 
     const exit = await pipe(
-      Express.get("/", (_, res) =>
-        accessBodyM((body) =>
+      Express.get("/", (_, _res) =>
+        accessBodyM((_body) =>
           T.effectTotal(() => {
-            res.send(body)
+            _res.send(_body)
           })
         )
       ),

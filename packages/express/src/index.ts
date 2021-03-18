@@ -8,6 +8,7 @@ import * as Supervisor from "@effect-ts/core/Effect/Supervisor"
 import { pipe } from "@effect-ts/core/Function"
 import type { Has } from "@effect-ts/core/Has"
 import type { NonEmptyArray } from "@effect-ts/core/NonEmptyArray"
+import { pretty } from "@effect-ts/system/Cause"
 import { literal } from "@effect-ts/system/Function"
 import { tag } from "@effect-ts/system/Has"
 import type { _A, _R } from "@effect-ts/system/Utils"
@@ -59,13 +60,23 @@ export interface ExpressServerConfig {
   readonly _tag: "@effect-ts/express/ServerConfig"
   readonly port: number
   readonly host: string
+  readonly exitHandler: typeof defaultExitHandler
 }
 
 export const ExpressServerConfig = tag<ExpressServerConfig>()
 
-export const LiveExpressServerConfig = (host: string, port: number) =>
+export const LiveExpressServerConfig = (
+  host: string,
+  port: number,
+  exitHandler: typeof defaultExitHandler
+) =>
   L.succeed(
-    ExpressServerConfig.of({ _tag: "@effect-ts/express/ServerConfig", host, port })
+    ExpressServerConfig.of({
+      _tag: "@effect-ts/express/ServerConfig",
+      host,
+      port,
+      exitHandler
+    })
   ).setKey(ExpressServerConfig.key)
 
 export const makeExpressServer = M.gen(function* (_) {
@@ -118,9 +129,10 @@ export type ExpressEnv = Has<ExpressServerConfig> &
 
 export function LiveExpress(
   host: string,
-  port: number
+  port: number,
+  exitHandler: typeof defaultExitHandler = defaultExitHandler
 ): L.Layer<unknown, never, ExpressEnv> {
-  return LiveExpressServerConfig(host, port)
+  return LiveExpressServerConfig(host, port, exitHandler)
     [">+>"](LiveExpressSupervisor)
     [">+>"](LiveExpressApp)
     [">+>"](LiveExpressServer)
@@ -202,15 +214,14 @@ export function expressRuntime<R>() {
   )
 }
 
-export function match(method: Methods) {
-  return function <
-    Handlers extends NonEmptyArray<EffectRequestHandler<any, any, any, any, any, any>>
-  >(
+export function match(
+  method: Methods
+): {
+  <Handlers extends NonEmptyArray<EffectRequestHandler<any, any, any, any, any, any>>>(
     path: PathParams,
     ...handlers: Handlers
   ): T.RIO<
-    Has<ExpressApp> &
-      Has<ExpressSupervisor> &
+    ExpressEnv &
       _R<
         {
           [k in keyof Handlers]: [Handlers[k]] extends [
@@ -221,23 +232,40 @@ export function match(method: Methods) {
         }[number]
       >,
     void
-  > {
+  >
+} {
+  return function (path, ...handlers) {
     return expressRuntime()["|>"](
       T.chain((runtime) =>
         withExpressApp((app) =>
-          T.effectTotal(() => {
-            app[method](
-              path,
-              ...handlers.map(
-                (handler): RequestHandler => (req, res, next) => {
-                  runtime.run(handler(req, res, next))
-                }
+          T.accessServiceM(ExpressServerConfig)(({ exitHandler }) =>
+            T.effectTotal(() => {
+              app[method](
+                path,
+                ...handlers.map(
+                  (handler): RequestHandler => (req, res, next) => {
+                    runtime.run(handler(req, res, next), exitHandler(req, res, next))
+                  }
+                )
               )
-            )
-          })
+            })
+          )
         )
       )
     )
+  }
+}
+
+export function defaultExitHandler(
+  _req: Request,
+  _res: Response,
+  _next: NextFunction
+): F.Callback<never, void> {
+  return (e) => {
+    if (e._tag === "Failure") {
+      console.error(pretty(e.cause))
+      _res.status(500).end()
+    }
   }
 }
 
@@ -246,8 +274,7 @@ export function use<
 >(
   ...handlers: Handlers
 ): T.RIO<
-  Has<ExpressApp> &
-    Has<ExpressSupervisor> &
+  ExpressEnv &
     _R<
       {
         [k in keyof Handlers]: [Handlers[k]] extends [
@@ -265,8 +292,7 @@ export function use<
   path: PathParams,
   ...handlers: Handlers
 ): T.RIO<
-  Has<ExpressApp> &
-    Has<ExpressSupervisor> &
+  ExpressEnv &
     _R<
       {
         [k in keyof Handlers]: [Handlers[k]] extends [
@@ -278,40 +304,40 @@ export function use<
     >,
   void
 >
-export function use(
-  ...args: any[]
-): T.RIO<Has<ExpressApp> & Has<ExpressSupervisor>, void> {
+export function use(...args: any[]): T.RIO<ExpressEnv, void> {
   return expressRuntime()["|>"](
     T.chain((runtime) =>
       withExpressApp((app) =>
-        T.effectTotal(() => {
-          if (typeof args[0] === "function") {
-            app.use(
-              ...args.map(
-                (handler: EffectRequestHandler<unknown>): RequestHandler => (
-                  req,
-                  res,
-                  next
-                ) => {
-                  runtime.run(handler(req, res, next))
-                }
+        T.accessServiceM(ExpressServerConfig)(({ exitHandler }) =>
+          T.effectTotal(() => {
+            if (typeof args[0] === "function") {
+              app.use(
+                ...args.map(
+                  (handler: EffectRequestHandler<unknown>): RequestHandler => (
+                    req,
+                    res,
+                    next
+                  ) => {
+                    runtime.run(handler(req, res, next), exitHandler(req, res, next))
+                  }
+                )
               )
-            )
-          } else {
-            app.use(
-              args[0],
-              ...args.slice(1).map(
-                (handler: EffectRequestHandler<unknown>): RequestHandler => (
-                  req,
-                  res,
-                  next
-                ) => {
-                  runtime.run(handler(req, res, next))
-                }
+            } else {
+              app.use(
+                args[0],
+                ...args.slice(1).map(
+                  (handler: EffectRequestHandler<unknown>): RequestHandler => (
+                    req,
+                    res,
+                    next
+                  ) => {
+                    runtime.run(handler(req, res, next), exitHandler(req, res, next))
+                  }
+                )
               )
-            )
-          }
-        })
+            }
+          })
+        )
       )
     )
   )
