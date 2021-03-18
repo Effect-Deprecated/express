@@ -8,7 +8,7 @@ import * as Supervisor from "@effect-ts/core/Effect/Supervisor"
 import { pipe } from "@effect-ts/core/Function"
 import type { Has } from "@effect-ts/core/Has"
 import type { NonEmptyArray } from "@effect-ts/core/NonEmptyArray"
-import { pretty } from "@effect-ts/system/Cause"
+import { died, pretty } from "@effect-ts/system/Cause"
 import { literal } from "@effect-ts/system/Function"
 import { tag } from "@effect-ts/system/Has"
 import type { _A, _R } from "@effect-ts/system/Utils"
@@ -263,7 +263,9 @@ export function defaultExitHandler(
 ): F.Callback<never, void> {
   return (e) => {
     if (e._tag === "Failure") {
-      console.error(pretty(e.cause))
+      if (died(e.cause)) {
+        console.error(pretty(e.cause))
+      }
       _res.status(500).end()
     }
   }
