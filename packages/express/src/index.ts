@@ -8,7 +8,6 @@ import * as M from "@effect-ts/core/Effect/Managed"
 import * as Supervisor from "@effect-ts/core/Effect/Supervisor"
 import type { Has } from "@effect-ts/core/Has"
 import type { NonEmptyArray } from "@effect-ts/core/NonEmptyArray"
-import { AtomicBoolean } from "@effect-ts/core/Support/AtomicBoolean"
 import { died, pretty } from "@effect-ts/system/Cause"
 import { literal } from "@effect-ts/system/Function"
 import { tag } from "@effect-ts/system/Has"
@@ -61,12 +60,6 @@ export function LiveExpressAppConfig<R>(
 export const ExpressAppTag = literal("@effect-ts/express/App")
 
 export const makeExpressApp = M.gen(function* (_) {
-  const open = yield* _(
-    T.effectTotal(() => new AtomicBoolean(true))["|>"](
-      M.makeExit((_) => T.effectTotal(() => _.set(false)))
-    )
-  )
-
   const app = yield* _(T.effectTotal(() => express()))
 
   const { host, port } = yield* _(ExpressAppConfig)
@@ -105,15 +98,7 @@ export const makeExpressApp = M.gen(function* (_) {
   )
 
   function runtime<R>() {
-    return T.runtime<R>()
-      ["|>"](T.map((r) => r.supervised(supervisor)))
-      ["|>"](
-        T.map((r) => <E, A>(self: T.Effect<R, E, A>) => {
-          if (open.get) {
-            r.runFiber(self)
-          }
-        })
-      )
+    return T.runtime<R>()["|>"](T.map((r) => r.supervised(supervisor)))
   }
 
   return {
@@ -257,7 +242,7 @@ export function match(
                 path,
                 ...handlers.map(
                   (handler): RequestHandler => (req, res, next) => {
-                    runtime(
+                    runtime.runFiber(
                       T.onTermination_(
                         handler(req, res, next),
                         exitHandler(req, res, next)
@@ -337,7 +322,7 @@ export function use(...args: any[]): T.RIO<ExpressEnv, void> {
                     res,
                     next
                   ) => {
-                    runtime(
+                    runtime.runFiber(
                       T.onTermination_(
                         handler(req, res, next),
                         exitHandler(req, res, next)
@@ -355,7 +340,7 @@ export function use(...args: any[]): T.RIO<ExpressEnv, void> {
                     res,
                     next
                   ) => {
-                    runtime(
+                    runtime.runFiber(
                       T.onTermination_(
                         handler(req, res, next),
                         exitHandler(req, res, next)
