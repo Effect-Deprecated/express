@@ -8,6 +8,7 @@ import * as M from "@effect-ts/core/Effect/Managed"
 import * as Supervisor from "@effect-ts/core/Effect/Supervisor"
 import type { Has } from "@effect-ts/core/Has"
 import type { NonEmptyArray } from "@effect-ts/core/NonEmptyArray"
+import { AtomicBoolean } from "@effect-ts/core/Support/AtomicBoolean"
 import { died, pretty } from "@effect-ts/system/Cause"
 import { literal } from "@effect-ts/system/Function"
 import { tag } from "@effect-ts/system/Has"
@@ -60,9 +61,15 @@ export function LiveExpressAppConfig<R>(
 export const ExpressAppTag = literal("@effect-ts/express/App")
 
 export const makeExpressApp = M.gen(function* (_) {
+  const open = yield* _(
+    T.effectTotal(() => new AtomicBoolean(true))["|>"](
+      M.makeExit((_) => T.effectTotal(() => _.set(false)))
+    )
+  )
+
   const app = yield* _(T.effectTotal(() => express()))
 
-  const { host, port } = yield* _(ExpressAppConfig)
+  const { exitHandler, host, port } = yield* _(ExpressAppConfig)
 
   const server = yield* _(
     M.make_(
@@ -97,8 +104,33 @@ export const makeExpressApp = M.gen(function* (_) {
     Supervisor.track["|>"](M.makeExit((s) => s.value["|>"](T.chain(F.interruptAll))))
   )
 
-  function runtime<R>() {
-    return T.runtime<R>()["|>"](T.map((r) => r.supervised(supervisor)))
+  function runtime<
+    Handlers extends NonEmptyArray<EffectRequestHandler<any, any, any, any, any, any>>
+  >(handlers: Handlers) {
+    return T.map_(
+      T.runtime<
+        _R<
+          {
+            [k in keyof Handlers]: [Handlers[k]] extends [
+              EffectRequestHandler<infer R, any, any, any, any, any>
+            ]
+              ? T.RIO<R, void>
+              : never
+          }[number]
+        >
+      >()["|>"](T.map((r) => r.supervised(supervisor))),
+      (r) =>
+        handlers.map(
+          (handler): RequestHandler => (req, res, next) => {
+            r.runFiber(
+              T.onTermination_(
+                open.get ? handler(req, res, next) : T.interrupt,
+                exitHandler(req, res, next)
+              )
+            )
+          }
+        )
+    )
   }
 
   return {
@@ -208,8 +240,10 @@ export interface EffectRequestHandler<
   ): T.RIO<R, void>
 }
 
-export function expressRuntime<R>() {
-  return T.accessServiceM(ExpressApp)((_) => _.runtime<R>())
+export function expressRuntime<
+  Handlers extends NonEmptyArray<EffectRequestHandler<any, any, any, any, any, any>>
+>(handlers: Handlers) {
+  return T.accessServiceM(ExpressApp)((_) => _.runtime(handlers))
 }
 
 export function match(
@@ -233,26 +267,12 @@ export function match(
   >
 } {
   return function (path, ...handlers) {
-    return expressRuntime()["|>"](
-      T.chain((runtime) =>
+    return expressRuntime(handlers)["|>"](
+      T.chain((expressHandlers) =>
         withExpressApp((app) =>
-          T.accessServiceM(ExpressAppConfig)(({ exitHandler }) =>
-            T.effectTotal(() => {
-              app[method](
-                path,
-                ...handlers.map(
-                  (handler): RequestHandler => (req, res, next) => {
-                    runtime.runFiber(
-                      T.onTermination_(
-                        handler(req, res, next),
-                        exitHandler(req, res, next)
-                      )
-                    )
-                  }
-                )
-              )
-            })
-          )
+          T.effectTotal(() => {
+            app[method](path, ...expressHandlers)
+          })
         )
       )
     )
@@ -309,52 +329,27 @@ export function use<
   void
 >
 export function use(...args: any[]): T.RIO<ExpressEnv, void> {
-  return expressRuntime()["|>"](
-    T.chain((runtime) =>
-      withExpressApp((app) =>
-        T.accessServiceM(ExpressAppConfig)(({ exitHandler }) =>
-          T.effectTotal(() => {
-            if (typeof args[0] === "function") {
-              app.use(
-                ...args.map(
-                  (handler: EffectRequestHandler<unknown>): RequestHandler => (
-                    req,
-                    res,
-                    next
-                  ) => {
-                    runtime.runFiber(
-                      T.onTermination_(
-                        handler(req, res, next),
-                        exitHandler(req, res, next)
-                      )
-                    )
-                  }
-                )
-              )
-            } else {
-              app.use(
-                args[0],
-                ...args.slice(1).map(
-                  (handler: EffectRequestHandler<unknown>): RequestHandler => (
-                    req,
-                    res,
-                    next
-                  ) => {
-                    runtime.runFiber(
-                      T.onTermination_(
-                        handler(req, res, next),
-                        exitHandler(req, res, next)
-                      )
-                    )
-                  }
-                )
-              )
-            }
-          })
+  return withExpressApp((app) => {
+    if (typeof args[0] === "function") {
+      return expressRuntime(
+        (args as unknown) as NonEmptyArray<
+          EffectRequestHandler<any, any, any, any, any, any>
+        >
+      )["|>"](
+        T.chain((expressHandlers) => T.effectTotal(() => app.use(...expressHandlers)))
+      )
+    } else {
+      return expressRuntime(
+        (args.slice(1) as unknown) as NonEmptyArray<
+          EffectRequestHandler<any, any, any, any, any, any>
+        >
+      )["|>"](
+        T.chain((expressHandlers) =>
+          T.effectTotal(() => app.use(args[0], ...expressHandlers))
         )
       )
-    )
-  )
+    }
+  })
 }
 
 export const all = match("all")
