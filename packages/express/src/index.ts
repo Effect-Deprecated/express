@@ -384,6 +384,9 @@ export const unsubscribe = match("unsubscribe")
 /**
  * Lift an express requestHandler into an effectified variant
  */
-export function classic(_: RequestHandler): EffectRequestHandler<unknown> {
-  return (req, res, next) => T.effectTotal(() => _(req, res, next))
+export function classic(
+  _: RequestHandler,
+  __trace?: string
+): EffectRequestHandler<unknown> {
+  return (req, res, next) => T.effectTotal(() => _(req, res, next), __trace)
 }
