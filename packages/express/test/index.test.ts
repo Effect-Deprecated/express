@@ -50,10 +50,18 @@ describe("Express", () => {
     const port = 31157
 
     await pipe(
-      Express.get("/", (_, _res) =>
-        T.effectTotal(() => {
-          throw new Error("defect")
-        })
+      T.tuple(
+        Express.use(
+          Express.classic((req, _, next) => {
+            req["message"] = "defect"
+            next()
+          })
+        ),
+        Express.get("/", (_req) =>
+          T.effectTotal(() => {
+            throw new Error(_req["message"])
+          })
+        )
       ),
       T.andThen(T.fromPromise(() => fetch(`http://${host}:${port}/`))),
       T.provideSomeLayer(Express.LiveExpress(host, port)),
@@ -65,7 +73,7 @@ describe("Express", () => {
     expect(fakeLog).toBeCalled()
     expect(fakeLog.mock.calls[0][0]).toContain("Error: defect")
     expect(fakeLog.mock.calls[0][0]).toContain(
-      "(@effect-ts/express/test): test/index.test.ts:54:22"
+      "(@effect-ts/express/test): test/index.test.ts:61:24"
     )
   })
 })
