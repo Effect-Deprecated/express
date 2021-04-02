@@ -1,7 +1,7 @@
 import * as T from "@effect-ts/core/Effect"
 import * as Exit from "@effect-ts/core/Effect/Exit"
 import * as L from "@effect-ts/core/Effect/Layer"
-import { flow, pipe } from "@effect-ts/core/Function"
+import { pipe } from "@effect-ts/core/Function"
 import { tag } from "@effect-ts/core/Has"
 
 import * as Express from "../src"
@@ -25,8 +25,6 @@ describe("Express", () => {
     const host = "127.0.0.1"
     const port = 31157
 
-    const fetchJson = flow(fetch, (p) => p.then((r) => r.json()))
-
     const exit = await pipe(
       Express.get("/", (_, _res) =>
         T.gen(function* ($) {
@@ -35,7 +33,9 @@ describe("Express", () => {
           _res.send({ message })
         })
       ),
-      T.zipRight(T.fromPromise(() => fetchJson(`http://${host}:${port}/`))),
+      T.zipRight(
+        T.fromPromise(() => fetch(`http://${host}:${port}/`).then((x) => x.json()))
+      ),
       T.provideSomeLayer(Express.LiveExpress(host, port)["+++"](LiveMessageService)),
       T.runPromiseExit
     )
