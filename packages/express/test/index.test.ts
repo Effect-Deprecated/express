@@ -41,6 +41,7 @@ describe("Express", () => {
 
     expect(exit).toEqual(Exit.succeed({ message: "ok" }))
   })
+
   it("should log defect", async () => {
     const fakeLog = jest.fn()
     const consoleSpy = jest.spyOn(console, "error")
@@ -73,8 +74,6 @@ describe("Express", () => {
 
     expect(fakeLog).toBeCalled()
     expect(fakeLog.mock.calls[0][0]).toContain("Error: defect")
-    expect(fakeLog.mock.calls[0][0]).toContain(
-      "(@effect-ts/express/test): test/index.test.ts:61:24"
-    )
+    expect(fakeLog.mock.calls[0][0]).toContain("test/index.test.ts:64:19")
   })
 })
