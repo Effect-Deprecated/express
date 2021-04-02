@@ -1,7 +1,7 @@
 import * as T from "@effect-ts/core/Effect"
 import * as Exit from "@effect-ts/core/Effect/Exit"
 import * as L from "@effect-ts/core/Effect/Layer"
-import { pipe } from "@effect-ts/core/Function"
+import { flow, pipe } from "@effect-ts/core/Function"
 import { tag } from "@effect-ts/core/Has"
 
 import * as Express from "../src"
@@ -25,6 +25,8 @@ describe("Express", () => {
     const host = "127.0.0.1"
     const port = 31157
 
+    const fetchJson = flow(fetch, (p) => p.then((r) => r.json()))
+
     const exit = await pipe(
       Express.get("/", (_, _res) =>
         T.gen(function* ($) {
@@ -33,8 +35,7 @@ describe("Express", () => {
           _res.send({ message })
         })
       ),
-      T.andThen(T.fromPromise(() => fetch(`http://${host}:${port}/`))),
-      T.chain((r) => T.fromPromise(() => r.json())),
+      T.zipRight(T.fromPromise(() => fetchJson(`http://${host}:${port}/`))),
       T.provideSomeLayer(Express.LiveExpress(host, port)["+++"](LiveMessageService)),
       T.runPromiseExit
     )
@@ -65,7 +66,7 @@ describe("Express", () => {
           })
         )
       ),
-      T.andThen(T.fromPromise(() => fetch(`http://${host}:${port}/`))),
+      T.zipRight(T.fromPromise(() => fetch(`http://${host}:${port}/`))),
       T.provideSomeLayer(Express.LiveExpress(host, port)),
       T.runPromiseExit
     )
@@ -74,6 +75,6 @@ describe("Express", () => {
 
     expect(fakeLog).toBeCalled()
     expect(fakeLog.mock.calls[0][0]).toContain("Error: defect")
-    expect(fakeLog.mock.calls[0][0]).toContain("test/index.test.ts:64:19")
+    expect(fakeLog.mock.calls[0][0]).toContain("test/index.test.ts:65:19")
   })
 })
