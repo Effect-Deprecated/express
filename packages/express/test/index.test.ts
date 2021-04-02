@@ -10,21 +10,15 @@ describe("Express", () => {
   it("should answer positively", async () => {
     interface MessageService {
       _tag: "@demo/MessageService"
-      message: T.UIO<string>
+      makeMessage: T.UIO<string>
     }
 
     const MessageService = tag<MessageService>()
 
-    const { message: accessMessage } = T.deriveLifted(MessageService)(
-      [],
-      ["message"],
-      []
-    )
-
     const LiveMessageService = L.fromEffect(MessageService)(
       T.effectTotal(() => ({
         _tag: "@demo/MessageService",
-        message: T.effectTotal(() => "ok")
+        makeMessage: T.effectTotal(() => "ok")
       }))
     )
 
@@ -33,13 +27,11 @@ describe("Express", () => {
 
     const exit = await pipe(
       Express.get("/", (_, _res) =>
-        accessMessage["|>"](
-          T.chain((message) =>
-            T.effectTotal(() => {
-              _res.send({ message })
-            })
-          )
-        )
+        T.gen(function* ($) {
+          const { makeMessage } = yield* $(MessageService)
+          const message = yield* $(makeMessage)
+          _res.send({ message })
+        })
       ),
       T.andThen(T.fromPromise(() => fetch(`http://${host}:${port}/`))),
       T.chain((r) => T.fromPromise(() => r.json())),
