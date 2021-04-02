@@ -8,17 +8,24 @@ import * as Express from "../src"
 
 describe("Express", () => {
   it("should answer positively", async () => {
-    interface AppConfig {
-      _tag: "@demo/AppConfig"
-      body: { message: string }
+    interface MessageService {
+      _tag: "@demo/MessageService"
+      message: T.UIO<string>
     }
 
-    const AppConfig = tag<AppConfig>()
+    const MessageService = tag<MessageService>()
 
-    const { body: accessBodyM } = T.deriveAccessM(AppConfig)(["body"])
+    const { message: accessMessage } = T.deriveLifted(MessageService)(
+      [],
+      ["message"],
+      []
+    )
 
-    const LiveAppConfig = L.fromEffect(AppConfig)(
-      T.effectTotal(() => ({ _tag: "@demo/AppConfig", body: { message: "ok" } }))
+    const LiveMessageService = L.fromEffect(MessageService)(
+      T.effectTotal(() => ({
+        _tag: "@demo/MessageService",
+        message: T.effectTotal(() => "ok")
+      }))
     )
 
     const host = "127.0.0.1"
@@ -26,15 +33,17 @@ describe("Express", () => {
 
     const exit = await pipe(
       Express.get("/", (_, _res) =>
-        accessBodyM((_body) =>
-          T.effectTotal(() => {
-            _res.send(_body)
-          })
+        accessMessage["|>"](
+          T.chain((message) =>
+            T.effectTotal(() => {
+              _res.send({ message })
+            })
+          )
         )
       ),
       T.andThen(T.fromPromise(() => fetch(`http://${host}:${port}/`))),
       T.chain((r) => T.fromPromise(() => r.json())),
-      T.provideSomeLayer(Express.LiveExpress(host, port)["+++"](LiveAppConfig)),
+      T.provideSomeLayer(Express.LiveExpress(host, port)["+++"](LiveMessageService)),
       T.runPromiseExit
     )
 
