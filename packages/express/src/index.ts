@@ -1,5 +1,6 @@
 // tracing: off
 
+import type { NonEmptyArray } from "@effect-ts/core/Collections/Immutable/NonEmptyArray"
 import * as T from "@effect-ts/core/Effect"
 import type { Cause } from "@effect-ts/core/Effect/Cause"
 import * as F from "@effect-ts/core/Effect/Fiber"
@@ -7,7 +8,6 @@ import * as L from "@effect-ts/core/Effect/Layer"
 import * as M from "@effect-ts/core/Effect/Managed"
 import * as Supervisor from "@effect-ts/core/Effect/Supervisor"
 import type { Has } from "@effect-ts/core/Has"
-import type { NonEmptyArray } from "@effect-ts/core/NonEmptyArray"
 import { AtomicBoolean } from "@effect-ts/core/Support/AtomicBoolean"
 import { died, pretty } from "@effect-ts/system/Cause"
 import { literal } from "@effect-ts/system/Function"
