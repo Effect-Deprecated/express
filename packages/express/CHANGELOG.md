@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.13.0](https://github.com/Effect-TS/express/compare/@effect-ts/express@0.12.1...@effect-ts/express@0.13.0) (2021-04-10)
+
+
+### Bug Fixes
+
+* **express:** update effect-ts to 0.29.0 ([8095b42](https://github.com/Effect-TS/express/commit/8095b42855756833219509845a080bcf45a08ed0))
+
+
+
+
+
 ## [0.12.1](https://github.com/Effect-TS/express/compare/@effect-ts/express@0.12.0...@effect-ts/express@0.12.1) (2021-04-06)
 
 
