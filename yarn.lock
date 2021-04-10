@@ -346,10 +346,10 @@
   resolved "https://registry.yarnpkg.com/@effect-ts/system/-/system-0.25.12.tgz#9ec6b2dc56e9b1a485be511c49aa6c1a356a19d4"
   integrity sha512-QngnwMTAyCsbu58hbi/6W0RLO9nwqoPLsEU4CAGnarwoahZolvUIgS2u3qqtuuszkaMVN8wfW606a1JEiA7Rmw==
 
-"@effect-ts/tracing-plugin@^0.8.4":
-  version "0.8.4"
-  resolved "https://registry.yarnpkg.com/@effect-ts/tracing-plugin/-/tracing-plugin-0.8.4.tgz#148ce610598d003334ac53d86da94edf083a395a"
-  integrity sha512-DhGc8zIQ68SsgNiYrL82aZvJwuoqVCWfUb63WC+xMIYc6ZZsBsnyde0skLFHpFejdOhUAoooCdpTi5+F+/OBVw==
+"@effect-ts/tracing-plugin@^0.9.0":
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/@effect-ts/tracing-plugin/-/tracing-plugin-0.9.0.tgz#5c47d2f8995529afba74af4ce87cff45edf5998f"
+  integrity sha512-VgVVBOh8m6yjIobSDQ+oNBVsGX6Cjs2u5sG1V2hZF8tSjtj8u5a9QFq1wSlq9A11WRII4v6A/VH0L4KoKCAR5w==
 
 "@eslint/eslintrc@^0.4.0":
   version "0.4.0"
@@ -3679,9 +3679,9 @@ fast-diff@^1.1.2:
   integrity sha512-xJuoT5+L99XlZ8twedaRf6Ax2TgQVxvgZOYoPKqZufmJib0tL2tegPBOZb1pVNgIhlqDlA0eO0c3wBvQcmzx4w==
 
 fast-equals@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/fast-equals/-/fast-equals-2.0.0.tgz#bef2c423af3939f2c54310df54c57e64cd2adefc"
-  integrity sha512-u6RBd8cSiLLxAiC04wVsLV6GBFDOXcTCgWkd3wEoFXgidPSoAJENqC9m7Jb2vewSvjBIfXV6icKeh3GTKfIaXA==
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/fast-equals/-/fast-equals-2.0.1.tgz#ffc1b0746aceaa855bed91e6aa0e70968645ed7c"
+  integrity sha512-jIHAbyu5Txdi299DitHXr4wuvw7ajz8S4xVgShJmQOUD6TovsKzvMoHoq9G8+dO6xeKWrwH3DURT+ZDKnwjSsA==
 
 fast-glob@^3.1.1, fast-glob@^3.2.5:
   version "3.2.5"
@@ -8399,10 +8399,10 @@ typedarray@^0.0.6:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
 
-typescript@4.2.3:
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.2.3.tgz#39062d8019912d43726298f09493d598048c1ce3"
-  integrity sha512-qOcYwxaByStAWrBf4x0fibwZvMRG+r4cQoTjbPtUlrWjBHbmCAww1i448U0GJ+3cNNEtebDteo/cHOR3xJ4wEw==
+typescript@4.2.4:
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.2.4.tgz#8610b59747de028fda898a8aef0e103f156d0961"
+  integrity sha512-V+evlYHZnQkaz8TRBuxTA92yZBPotr5H+WhQ7bD3hZUndx5tGOa1fuCgeSjxAzM1RiN5IzvadIXTVefuuwZCRg==
 
 typescript@next:
   version "4.3.0-dev.20210406"
