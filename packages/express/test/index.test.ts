@@ -16,9 +16,9 @@ describe("Express", () => {
     const MessageService = tag<MessageService>()
 
     const LiveMessageService = L.fromEffect(MessageService)(
-      T.effectTotal(() => ({
+      T.succeedWith(() => ({
         _tag: "@demo/MessageService",
-        makeMessage: T.effectTotal(() => "ok")
+        makeMessage: T.succeedWith(() => "ok")
       }))
     )
 
@@ -34,7 +34,7 @@ describe("Express", () => {
         })
       ),
       T.zipRight(
-        T.fromPromise(() => fetch(`http://${host}:${port}/`).then((x) => x.json()))
+        T.tryPromise(() => fetch(`http://${host}:${port}/`).then((x) => x.json()))
       ),
       T.provideSomeLayer(Express.LiveExpress(host, port)["+++"](LiveMessageService)),
       T.runPromiseExit
@@ -61,12 +61,12 @@ describe("Express", () => {
           })
         ),
         Express.get("/", (_req) =>
-          T.effectTotal(() => {
+          T.succeedWith(() => {
             throw new Error(_req["message"])
           })
         )
       ),
-      T.zipRight(T.fromPromise(() => fetch(`http://${host}:${port}/`))),
+      T.zipRight(T.tryPromise(() => fetch(`http://${host}:${port}/`))),
       T.provideSomeLayer(Express.LiveExpress(host, port)),
       T.runPromiseExit
     )
