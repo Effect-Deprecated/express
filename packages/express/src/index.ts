@@ -62,12 +62,12 @@ export const ExpressAppTag = literal("@effect-ts/express/App")
 
 export const makeExpressApp = M.gen(function* (_) {
   const open = yield* _(
-    T.effectTotal(() => new AtomicBoolean(true))["|>"](
-      M.makeExit((_) => T.effectTotal(() => _.set(false)))
+    T.succeedWith(() => new AtomicBoolean(true))["|>"](
+      M.makeExit((_) => T.succeedWith(() => _.set(false)))
     )
   )
 
-  const app = yield* _(T.effectTotal(() => express()))
+  const app = yield* _(T.succeedWith(() => express()))
 
   const { exitHandler, host, port } = yield* _(ExpressAppConfig)
 
@@ -79,7 +79,7 @@ export const makeExpressApp = M.gen(function* (_) {
         }
         const server = app.listen(port, host, () => {
           cb(
-            T.effectTotal(() => {
+            T.succeedWith(() => {
               server.removeListener("error", onError)
               return server
             })
@@ -270,7 +270,7 @@ export function match(
     return expressRuntime(handlers)["|>"](
       T.chain((expressHandlers) =>
         withExpressApp((app) =>
-          T.effectTotal(() => {
+          T.succeedWith(() => {
             app[method](path, ...expressHandlers)
           })
         )
@@ -285,7 +285,7 @@ export function defaultExitHandler(
   _next: NextFunction
 ): (cause: Cause<never>) => T.RIO<unknown, void> {
   return (cause) =>
-    T.effectTotal(() => {
+    T.succeedWith(() => {
       if (died(cause)) {
         console.error(pretty(cause))
       }
@@ -336,7 +336,7 @@ export function use(...args: any[]): T.RIO<ExpressEnv, void> {
           EffectRequestHandler<any, any, any, any, any, any>
         >
       )["|>"](
-        T.chain((expressHandlers) => T.effectTotal(() => app.use(...expressHandlers)))
+        T.chain((expressHandlers) => T.succeedWith(() => app.use(...expressHandlers)))
       )
     } else {
       return expressRuntime(
@@ -345,7 +345,7 @@ export function use(...args: any[]): T.RIO<ExpressEnv, void> {
         >
       )["|>"](
         T.chain((expressHandlers) =>
-          T.effectTotal(() => app.use(args[0], ...expressHandlers))
+          T.succeedWith(() => app.use(args[0], ...expressHandlers))
         )
       )
     }
@@ -388,5 +388,5 @@ export function classic(
   _: RequestHandler,
   __trace?: string
 ): EffectRequestHandler<unknown> {
-  return (req, res, next) => T.effectTotal(() => _(req, res, next), __trace)
+  return (req, res, next) => T.succeedWith(() => _(req, res, next), __trace)
 }
