@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.18.0](https://github.com/Effect-TS/express/compare/@effect-ts/express@0.17.0...@effect-ts/express@0.18.0) (2021-05-08)
+
+**Note:** Version bump only for package @effect-ts/express
+
+
+
+
+
 # [0.17.0](https://github.com/Effect-TS/express/compare/@effect-ts/express@0.16.0...@effect-ts/express@0.17.0) (2021-04-21)
 
 **Note:** Version bump only for package @effect-ts/express
