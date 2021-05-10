@@ -121,14 +121,15 @@ export const makeExpressApp = M.gen(function* (_) {
       >()["|>"](T.map((r) => r.supervised(supervisor))),
       (r) =>
         handlers.map(
-          (handler): RequestHandler => (req, res, next) => {
-            r.runFiber(
-              T.onTermination_(
-                open.get ? handler(req, res, next) : T.interrupt,
-                exitHandler(req, res, next)
+          (handler): RequestHandler =>
+            (req, res, next) => {
+              r.runFiber(
+                T.onTermination_(
+                  open.get ? handler(req, res, next) : T.interrupt,
+                  exitHandler(req, res, next)
+                )
               )
-            )
-          }
+            }
         )
     )
   }
@@ -246,9 +247,7 @@ export function expressRuntime<
   return T.accessServiceM(ExpressApp)((_) => _.runtime(handlers))
 }
 
-export function match(
-  method: Methods
-): {
+export function match(method: Methods): {
   <Handlers extends NonEmptyArray<EffectRequestHandler<any, any, any, any, any, any>>>(
     path: PathParams,
     ...handlers: Handlers
@@ -332,7 +331,7 @@ export function use(...args: any[]): T.RIO<ExpressEnv, void> {
   return withExpressApp((app) => {
     if (typeof args[0] === "function") {
       return expressRuntime(
-        (args as unknown) as NonEmptyArray<
+        args as unknown as NonEmptyArray<
           EffectRequestHandler<any, any, any, any, any, any>
         >
       )["|>"](
@@ -340,7 +339,7 @@ export function use(...args: any[]): T.RIO<ExpressEnv, void> {
       )
     } else {
       return expressRuntime(
-        (args.slice(1) as unknown) as NonEmptyArray<
+        args.slice(1) as unknown as NonEmptyArray<
           EffectRequestHandler<any, any, any, any, any, any>
         >
       )["|>"](
