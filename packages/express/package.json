@@ -27,7 +27,7 @@
     "modules": []
   },
   "peerDependencies": {
-    "@effect-ts/core": "^0.38.1",
+    "@effect-ts/core": "^0.40.0",
     "express": ">= 4.17.1"
   }
 }
