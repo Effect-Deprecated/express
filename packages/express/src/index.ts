@@ -13,6 +13,7 @@ import { died, pretty } from "@effect-ts/system/Cause"
 import { literal } from "@effect-ts/system/Function"
 import { tag } from "@effect-ts/system/Has"
 import type { _A, _R } from "@effect-ts/system/Utils"
+import type { NextHandleFunction } from "connect"
 import type { NextFunction, Request, RequestHandler, Response } from "express"
 import express from "express"
 import type { Server } from "http"
@@ -384,8 +385,17 @@ export const unsubscribe = match("unsubscribe")
  * Lift an express requestHandler into an effectified variant
  */
 export function classic(
+  _: NextHandleFunction,
+  __trace?: string
+): EffectRequestHandler<unknown>
+export function classic(
   _: RequestHandler,
   __trace?: string
+): EffectRequestHandler<unknown>
+export function classic(
+  _: RequestHandler | NextHandleFunction,
+  __trace?: string
 ): EffectRequestHandler<unknown> {
+  // @ts-expect-error
   return (req, res, next) => T.succeedWith(() => _(req, res, next), __trace)
 }

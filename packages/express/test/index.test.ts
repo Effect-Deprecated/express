@@ -3,6 +3,7 @@ import * as Exit from "@effect-ts/core/Effect/Exit"
 import * as L from "@effect-ts/core/Effect/Layer"
 import { pipe } from "@effect-ts/core/Function"
 import { tag } from "@effect-ts/core/Has"
+import * as exp from "express"
 
 import * as Express from "../src"
 
@@ -26,7 +27,7 @@ describe("Express", () => {
     const port = 31157
 
     const exit = await pipe(
-      Express.get("/", (_, _res) =>
+      Express.get("/", Express.classic(exp.json()), (_, _res) =>
         T.gen(function* ($) {
           const { makeMessage } = yield* $(MessageService)
           const message = yield* $(makeMessage)
@@ -75,6 +76,6 @@ describe("Express", () => {
 
     expect(fakeLog).toBeCalled()
     expect(fakeLog.mock.calls[0][0]).toContain("Error: defect")
-    expect(fakeLog.mock.calls[0][0]).toContain("test/index.test.ts:65:19")
+    expect(fakeLog.mock.calls[0][0]).toContain("test/index.test.ts:65:24")
   })
 })
