@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.20.2](https://github.com/Effect-TS/express/compare/@effect-ts/express@0.20.1...@effect-ts/express@0.20.2) (2021-06-11)
+
+
+### Bug Fixes
+
+* **express:** destroy open connections ([0161323](https://github.com/Effect-TS/express/commit/01613230a0e59518f7db1e0be5fa6af459aca220))
+
+
+
+
+
 ## [0.20.1](https://github.com/Effect-TS/express/compare/@effect-ts/express@0.20.0...@effect-ts/express@0.20.1) (2021-06-06)
 
 **Note:** Version bump only for package @effect-ts/express
