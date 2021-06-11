@@ -17,6 +17,7 @@ import type { NextHandleFunction } from "connect"
 import type { NextFunction, Request, RequestHandler, Response } from "express"
 import express from "express"
 import type { Server } from "http"
+import type { Socket } from "net"
 
 export class NodeServerCloseError {
   readonly _tag = "NodeServerCloseError"
@@ -72,6 +73,8 @@ export const makeExpressApp = M.gen(function* (_) {
 
   const { exitHandler, host, port } = yield* _(ExpressAppConfig)
 
+  const connections = new Set<Socket>()
+
   const server = yield* _(
     M.make_(
       T.effectAsync<unknown, never, Server>((cb) => {
@@ -87,9 +90,19 @@ export const makeExpressApp = M.gen(function* (_) {
           )
         })
         server.addListener("error", onError)
+        server.on("connection", (connection) => {
+          connections.add(connection)
+          connection.on("close", () => {
+            connections.delete(connection)
+          })
+        })
       }),
       (server) =>
         T.effectAsync<unknown, never, void>((cb) => {
+          connections.forEach((s) => {
+            s.end()
+            s.destroy()
+          })
           server.close((err) => {
             if (err) {
               cb(T.die(new NodeServerCloseError(err)))
