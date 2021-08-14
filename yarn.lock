@@ -369,10 +369,10 @@
   dependencies:
     chalk "^4.0.0"
 
-"@effect-ts/build-utils@^0.20.10":
-  version "0.20.10"
-  resolved "https://registry.yarnpkg.com/@effect-ts/build-utils/-/build-utils-0.20.10.tgz#c089fc1400fa1fb3548cc54f65d859d2d247f1ba"
-  integrity sha512-S+ldty7iKDdXtxdNmsgNCqnmdw9evOj0G3UWGEeUuzjh5NEwfL1npEiG0uxGH/0+rczKZM6XNmS+QtgdEaBVOg==
+"@effect-ts/build-utils@^0.23.0":
+  version "0.23.0"
+  resolved "https://registry.yarnpkg.com/@effect-ts/build-utils/-/build-utils-0.23.0.tgz#92e351c5b365e459ab28e970ff7b79ef12174e99"
+  integrity sha512-jr6BLNAYsXEnGgsbrum05NjOWeT4VuJpUT1CsmwzI4FVmhL+HUmfsmED8rWEILbBaKomudZetzQv6aGT9cV8Mg==
 
 "@effect-ts/core@^0.40.8":
   version "0.40.17"
@@ -8460,9 +8460,9 @@ trim-off-newlines@^1.0.0:
   integrity sha1-n5up2e+odkw4dpi8v+sshI8RrbM=
 
 ts-jest@^27.0.3:
-  version "27.0.3"
-  resolved "https://registry.yarnpkg.com/ts-jest/-/ts-jest-27.0.3.tgz#808492f022296cde19390bb6ad627c8126bf93f8"
-  integrity sha512-U5rdMjnYam9Ucw+h0QvtNDbc5+88nxt7tbIvqaZUhFrfG4+SkWhMXjejCLVGcpILTPuV+H3W/GZDZrnZFpPeXw==
+  version "27.0.4"
+  resolved "https://registry.yarnpkg.com/ts-jest/-/ts-jest-27.0.4.tgz#df49683535831560ccb58f94c023d831b1b80df0"
+  integrity sha512-c4E1ECy9Xz2WGfTMyHbSaArlIva7Wi2p43QOMmCqjSSjHP06KXv+aT+eSY+yZMuqsMi3k7pyGsGj2q5oSl5WfQ==
   dependencies:
     bs-logger "0.x"
     buffer-from "1.x"
