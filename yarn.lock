@@ -393,7 +393,7 @@
   dependencies:
     "@effect-ts/system" "^0.37.14"
 
-"@effect-ts/system@^0.37.14", "@effect-ts/system@^0.37.8":
+"@effect-ts/system@^0.37.14":
   version "0.37.14"
   resolved "https://registry.yarnpkg.com/@effect-ts/system/-/system-0.37.14.tgz#b16749d1a56240713950bdf624fb1853df6f5093"
   integrity sha512-sLmsyazA18i08dk1AbnqvWcUXB857w2uu9WIR2b5ySYMWYrDI5GZ9TFqMurEn/2wRuwQTNv/m6wOrWi3fn6hOQ==
