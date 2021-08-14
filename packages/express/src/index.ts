@@ -409,6 +409,5 @@ export function classic(
   _: RequestHandler | NextHandleFunction,
   __trace?: string
 ): EffectRequestHandler<unknown> {
-  // @ts-expect-error
   return (req, res, next) => T.succeedWith(() => _(req, res, next), __trace)
 }
