@@ -2,7 +2,7 @@ import * as T from "@effect-ts/core/Effect"
 import * as Exit from "@effect-ts/core/Effect/Exit"
 import * as L from "@effect-ts/core/Effect/Layer"
 import { pipe } from "@effect-ts/core/Function"
-import { tag } from "@effect-ts/core/Has"
+import { tag, ServiceId } from "@effect-ts/core/Has"
 import * as exp from "express"
 
 import * as Express from "../src"
@@ -11,7 +11,7 @@ describe("Express", () => {
   it("should answer positively", async () => {
     const MessageServiceTag = "@demo/MessageService"
     interface MessageService {
-      serviceId: typeof MessageServiceTag
+      [ServiceId]: typeof MessageServiceTag
       makeMessage: T.UIO<string>
     }
 

@@ -7,11 +7,11 @@ import * as F from "@effect-ts/core/Effect/Fiber"
 import * as L from "@effect-ts/core/Effect/Layer"
 import * as M from "@effect-ts/core/Effect/Managed"
 import * as Supervisor from "@effect-ts/core/Effect/Supervisor"
-import type { Has } from "@effect-ts/core/Has"
+import type { Has, ServiceId } from "@effect-ts/core/Has"
 import { AtomicBoolean } from "@effect-ts/core/Support/AtomicBoolean"
 import { died, pretty } from "@effect-ts/system/Cause"
 import { literal } from "@effect-ts/system/Function"
-import { tag } from "@effect-ts/system/Has"
+import { service, tag } from "@effect-ts/system/Has"
 import type { _A, _R } from "@effect-ts/system/Utils"
 import type { NextHandleFunction } from "connect"
 import type { NextFunction, Request, RequestHandler, Response } from "express"
@@ -32,7 +32,7 @@ export class NodeServerListenError {
 export const ExpressAppConfigTag = literal("@effect-ts/express/AppConfig")
 
 export interface ExpressAppConfig {
-  readonly serviceId: typeof ExpressAppConfigTag
+  readonly [ServiceId]: typeof ExpressAppConfigTag
   readonly port: number
   readonly host: string
   readonly exitHandler: typeof defaultExitHandler
@@ -50,13 +50,14 @@ export function LiveExpressAppConfig<R>(
   ) => (cause: Cause<never>) => T.RIO<R, void>
 ) {
   return L.fromEffect(ExpressAppConfig)(
-    T.access((r: R) => ({
-      serviceId: ExpressAppConfigTag,
-      host,
-      port,
-      exitHandler: (req, res, next) => (cause) =>
-        T.provideAll_(exitHandler(req, res, next)(cause), r)
-    }))
+    T.access((r: R) =>
+      service(ExpressAppConfigTag, {
+        host,
+        port,
+        exitHandler: (req, res, next) => (cause) =>
+          T.provideAll_(exitHandler(req, res, next)(cause), r)
+      })
+    )
   )
 }
 
@@ -148,13 +149,12 @@ export const makeExpressApp = M.gen(function* (_) {
     )
   }
 
-  return {
-    serviceId: ExpressAppTag,
+  return service(ExpressAppTag, {
     app,
     supervisor,
     server,
     runtime
-  }
+  })
 })
 
 export interface ExpressApp extends _A<typeof makeExpressApp> {}
