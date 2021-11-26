@@ -32,13 +32,13 @@ export class NodeServerListenError {
 export const ExpressAppConfigTag = literal("@effect-ts/express/AppConfig")
 
 export interface ExpressAppConfig {
-  readonly serviceId: typeof ExpressAppConfigTag
+  readonly _tag: typeof ExpressAppConfigTag
   readonly port: number
   readonly host: string
   readonly exitHandler: typeof defaultExitHandler
 }
 
-export const ExpressAppConfig = tag<ExpressAppConfig>(ExpressAppConfigTag)
+export const ExpressAppConfig = tag<ExpressAppConfig>().setKey(ExpressAppConfigTag)
 
 export function LiveExpressAppConfig<R>(
   host: string,
@@ -51,7 +51,7 @@ export function LiveExpressAppConfig<R>(
 ) {
   return L.fromEffect(ExpressAppConfig)(
     T.access((r: R) => ({
-      serviceId: ExpressAppConfigTag,
+      _tag: ExpressAppConfigTag,
       host,
       port,
       exitHandler: (req, res, next) => (cause) =>
@@ -149,7 +149,7 @@ export const makeExpressApp = M.gen(function* (_) {
   }
 
   return {
-    serviceId: ExpressAppTag,
+    _tag: ExpressAppTag,
     app,
     supervisor,
     server,
@@ -158,7 +158,7 @@ export const makeExpressApp = M.gen(function* (_) {
 })
 
 export interface ExpressApp extends _A<typeof makeExpressApp> {}
-export const ExpressApp = tag<ExpressApp>(ExpressAppTag)
+export const ExpressApp = tag<ExpressApp>().setKey(ExpressAppTag)
 export const LiveExpressApp = L.fromManaged(ExpressApp)(makeExpressApp)
 
 export type ExpressEnv = Has<ExpressAppConfig> & Has<ExpressApp>
