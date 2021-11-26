@@ -9,13 +9,12 @@ import * as Express from "../src"
 
 describe("Express", () => {
   it("should answer positively", async () => {
-    const MessageServiceTag = "@demo/MessageService"
     interface MessageService {
-      serviceId: typeof MessageServiceTag
+      _tag: "@demo/MessageService"
       makeMessage: T.UIO<string>
     }
 
-    const MessageService = tag<MessageService>(MessageServiceTag)
+    const MessageService = tag<MessageService>()
 
     const LiveMessageService = L.fromEffect(MessageService)(
       T.succeedWith(() => ({
@@ -77,6 +76,6 @@ describe("Express", () => {
 
     expect(fakeLog).toBeCalled()
     expect(fakeLog.mock.calls[0][0]).toContain("Error: defect")
-    expect(fakeLog.mock.calls[0][0]).toContain("test/index.test.ts:67:19")
+    expect(fakeLog.mock.calls[0][0]).toContain("test/index.test.ts:65:24")
   })
 })
