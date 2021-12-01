@@ -38,7 +38,7 @@ export interface ExpressAppConfig {
   readonly exitHandler: typeof defaultExitHandler
 }
 
-export const ExpressAppConfig = tag<ExpressAppConfig>().setKey(ExpressAppConfigTag)
+export const ExpressAppConfig = tag<ExpressAppConfig>(ExpressAppConfigTag)
 
 export function LiveExpressAppConfig<R>(
   host: string,
@@ -158,7 +158,7 @@ export const makeExpressApp = M.gen(function* (_) {
 })
 
 export interface ExpressApp extends _A<typeof makeExpressApp> {}
-export const ExpressApp = tag<ExpressApp>().setKey(ExpressAppTag)
+export const ExpressApp = tag<ExpressApp>(ExpressAppTag)
 export const LiveExpressApp = L.fromManaged(ExpressApp)(makeExpressApp)
 
 export type ExpressEnv = Has<ExpressAppConfig> & Has<ExpressApp>
