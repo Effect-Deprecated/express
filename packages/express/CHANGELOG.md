@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.24.0](https://github.com/Effect-TS/express/compare/@effect-ts/express@0.23.0...@effect-ts/express@0.24.0) (2021-12-02)
+
+
+### Bug Fixes
+
+* replace deprecated setKey calls ([#302](https://github.com/Effect-TS/express/issues/302)) ([fe99916](https://github.com/Effect-TS/express/commit/fe999162ff9139abdeaaf758aa32ad2e576d84dd))
+
+
+
+
+
 # [0.23.0](https://github.com/Effect-TS/express/compare/@effect-ts/express@0.22.0...@effect-ts/express@0.23.0) (2021-11-26)
 
 **Note:** Version bump only for package @effect-ts/express
