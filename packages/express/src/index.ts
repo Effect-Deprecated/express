@@ -1,3 +1,5 @@
+// ets_tracing: off
+
 // tracing: off
 
 import type { NonEmptyArray } from "@effect-ts/core/Collections/Immutable/NonEmptyArray"
@@ -411,3 +413,8 @@ export function classic(
 ): EffectRequestHandler<unknown> {
   return (req, res, next) => T.succeedWith(() => _(req, res, next), __trace)
 }
+
+/**
+ * The same as T.never, keeps the main fiber alive until interrupted
+ */
+export const listen = T.never

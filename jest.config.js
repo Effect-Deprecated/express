@@ -10,18 +10,18 @@ module.exports = {
   setupFiles: ["./scripts/jest-setup.ts"],
   modulePathIgnorePatterns: [
     "<rootDir>/packages/.*/build",
+    "<rootDir>/packages/.*/dist",
     "<rootDir>/packages/.*/compiler-debug",
     "<rootDir>/_tmp"
   ],
   verbose: true,
-  moduleNameMapper: {
-    "@effect-ts/express/(.*)$": "<rootDir>/packages/express/build/$1",
-    "@effect-ts/express$": "<rootDir>/packages/express/build"
-  },
   globals: {
     "ts-jest": {
       tsconfig: "<rootDir>/tsconfig.jest.json",
-      compiler: "ttypescript"
+      useESM: true
     }
+  },
+  moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.js$": "$1"
   }
 }

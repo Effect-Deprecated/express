@@ -5,7 +5,7 @@ import { pipe } from "@effect-ts/core/Function"
 import { tag } from "@effect-ts/core/Has"
 import * as exp from "express"
 
-import * as Express from "../src"
+import * as Express from "../src/index.js"
 
 describe("Express", () => {
   it("should answer positively", async () => {
